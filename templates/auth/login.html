@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}로그인 - BMSE 교수 게시판{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5 col-lg-4">
+    <div class="card shadow-sm border-0 mt-3">
+      <div class="card-body p-4">
+        <h4 class="card-title text-center mb-4 fw-bold">
+          <i class="bi bi-box-arrow-in-right text-primary me-2"></i>로그인
+        </h4>
+
+        <form method="POST" action="{{ url_for('login') }}" novalidate>
+          <div class="mb-3">
+            <label for="username" class="form-label fw-semibold">아이디</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              class="form-control"
+              placeholder="아이디를 입력하세요"
+              value="{{ request.form.get('username', '') }}"
+              required
+              autofocus
+            />
+          </div>
+
+          <div class="mb-4">
+            <label for="password" class="form-label fw-semibold">비밀번호</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="form-control"
+              placeholder="비밀번호를 입력하세요"
+              required
+            />
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="bi bi-box-arrow-in-right me-1"></i>로그인
+            </button>
+          </div>
+        </form>
+
+        <hr class="my-3" />
+
+        <p class="text-center text-muted small mb-0">
+          계정이 없으신가요?
+          <a href="{{ url_for('register') }}" class="text-decoration-none fw-semibold">회원가입</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

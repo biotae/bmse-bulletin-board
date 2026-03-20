@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}게시판 - BMSE 교수 게시판{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="fw-bold mb-0">
+    <i class="bi bi-list-ul text-primary me-2"></i>게시판
+  </h4>
+  <a href="{{ url_for('board_new') }}" class="btn btn-primary">
+    <i class="bi bi-pencil-square me-1"></i>글쓰기
+  </a>
+</div>
+
+<div class="card shadow-sm border-0">
+  <div class="card-body p-0">
+    {% if posts %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 board-table">
+        <thead class="table-light">
+          <tr>
+            <th class="text-center col-num">번호</th>
+            <th>제목</th>
+            <th class="text-center col-author">작성자</th>
+            <th class="text-center col-date">날짜</th>
+            <th class="text-center col-views">조회수</th>
+            <th class="text-center col-attach">첨부</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% set total = pagination.total %}
+          {% set per_page = pagination.per_page %}
+          {% set current_page = pagination.page %}
+          {% for post in posts %}
+          {% set row_num = total - (current_page - 1) * per_page - loop.index0 %}
+          <tr>
+            <td class="text-center text-muted small">{{ row_num }}</td>
+            <td>
+              <a href="{{ url_for('board_detail', post_id=post.id) }}"
+                 class="text-decoration-none text-dark fw-semibold post-title-link">
+                {{ post.title }}
+              </a>
+              {% set comment_count = post.comments.count() %}
+              {% if comment_count > 0 %}
+              <span class="badge bg-secondary ms-1 small">{{ comment_count }}</span>
+              {% endif %}
+            </td>
+            <td class="text-center small">{{ post.author.username }}</td>
+            <td class="text-center small text-muted">
+              {{ post.created_at.strftime('%Y-%m-%d') }}
+            </td>
+            <td class="text-center small text-muted">{{ post.view_count }}</td>
+            <td class="text-center">
+              {% if post.attachments.count() > 0 %}
+              <i class="bi bi-paperclip text-secondary" title="{{ post.attachments.count() }}개 파일 첨부"></i>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-inbox display-4 d-block mb-3"></i>
+      <p class="mb-0">등록된 게시글이 없습니다.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Pagination -->
+{% if pagination.pages > 1 %}
+<nav class="mt-4" aria-label="게시글 페이지 이동">
+  <ul class="pagination justify-content-center">
+    {% if pagination.has_prev %}
+    <li class="page-item">
+      <a class="page-link" href="{{ url_for('board_list', page=pagination.prev_num) }}" aria-label="이전">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+    </li>
+    {% else %}
+    <li class="page-item disabled">
+      <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+    </li>
+    {% endif %}
+
+    {% for page_num in pagination.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+      {% if page_num %}
+        {% if page_num == pagination.page %}
+        <li class="page-item active" aria-current="page">
+          <span class="page-link">{{ page_num }}</span>
+        </li>
+        {% else %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('board_list', page=page_num) }}">{{ page_num }}</a>
+        </li>
+        {% endif %}
+      {% else %}
+      <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+      {% endif %}
+    {% endfor %}
+
+    {% if pagination.has_next %}
+    <li class="page-item">
+      <a class="page-link" href="{{ url_for('board_list', page=pagination.next_num) }}" aria-label="다음">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+    </li>
+    {% else %}
+    <li class="page-item disabled">
+      <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+
+<div class="text-center text-muted small mt-2">
+  전체 {{ pagination.total }}개 게시글
+</div>
+{% endblock %}

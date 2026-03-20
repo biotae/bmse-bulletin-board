@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block title %}회원 관리 - BMSE 교수 게시판{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="fw-bold mb-0">
+    <i class="bi bi-shield-lock text-primary me-2"></i>회원 관리
+  </h4>
+  <span class="badge bg-secondary fs-6">전체 {{ members | length }}명</span>
+</div>
+
+<div class="card shadow-sm border-0">
+  <div class="card-body p-0">
+    {% if members %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>아이디</th>
+            <th>이메일</th>
+            <th class="text-center">역할</th>
+            <th class="text-center">상태</th>
+            <th class="text-center">가입일</th>
+            <th class="text-center">관리</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for member in members %}
+          <tr {% if not member.is_active %}class="table-warning"{% endif %}>
+            <td>
+              <span class="fw-semibold">{{ member.username }}</span>
+              {% if member.id == current_user.id %}
+              <span class="badge bg-light text-secondary border ms-1 small">나</span>
+              {% endif %}
+            </td>
+            <td class="text-muted small">{{ member.email }}</td>
+            <td class="text-center">
+              {% if member.role == 'admin' %}
+              <span class="badge bg-warning text-dark">
+                <i class="bi bi-shield-fill me-1"></i>관리자
+              </span>
+              {% else %}
+              <span class="badge bg-info text-dark">
+                <i class="bi bi-person-fill me-1"></i>일반회원
+              </span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              {% if member.is_active %}
+              <span class="badge bg-success">
+                <i class="bi bi-check-circle me-1"></i>활성
+              </span>
+              {% else %}
+              <span class="badge bg-secondary">
+                <i class="bi bi-x-circle me-1"></i>비활성
+              </span>
+              {% endif %}
+            </td>
+            <td class="text-center text-muted small">
+              {{ member.created_at.strftime('%Y-%m-%d') }}
+            </td>
+            <td class="text-center">
+              {% if member.id != current_user.id %}
+              <div class="d-flex gap-1 justify-content-center flex-wrap">
+                <!-- Toggle active -->
+                <form method="POST"
+                      action="{{ url_for('admin_toggle_active', user_id=member.id) }}"
+                      class="d-inline">
+                  {% if member.is_active %}
+                  <button type="submit"
+                          class="btn btn-outline-warning btn-sm"
+                          onclick="return confirm('{{ member.username }} 계정을 비활성화하시겠습니까?')"
+                          title="비활성화">
+                    <i class="bi bi-pause-circle me-1"></i>비활성화
+                  </button>
+                  {% else %}
+                  <button type="submit"
+                          class="btn btn-outline-success btn-sm"
+                          onclick="return confirm('{{ member.username }} 계정을 활성화하시겠습니까?')"
+                          title="활성화">
+                    <i class="bi bi-play-circle me-1"></i>활성화
+                  </button>
+                  {% endif %}
+                </form>
+
+                <!-- Toggle role -->
+                <form method="POST"
+                      action="{{ url_for('admin_toggle_role', user_id=member.id) }}"
+                      class="d-inline">
+                  {% if member.role == 'admin' %}
+                  <button type="submit"
+                          class="btn btn-outline-secondary btn-sm"
+                          onclick="return confirm('{{ member.username }}의 역할을 일반회원으로 변경하시겠습니까?')"
+                          title="일반회원으로 변경">
+                    <i class="bi bi-arrow-down-circle me-1"></i>일반회원으로
+                  </button>
+                  {% else %}
+                  <button type="submit"
+                          class="btn btn-outline-primary btn-sm"
+                          onclick="return confirm('{{ member.username }}의 역할을 관리자로 변경하시겠습니까?')"
+                          title="관리자로 변경">
+                    <i class="bi bi-arrow-up-circle me-1"></i>관리자로
+                  </button>
+                  {% endif %}
+                </form>
+              </div>
+              {% else %}
+              <span class="text-muted small">-</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-people display-4 d-block mb-3"></i>
+      <p class="mb-0">등록된 회원이 없습니다.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Legend -->
+<div class="mt-3 text-muted small">
+  <i class="bi bi-info-circle me-1"></i>
+  노란색 행은 아직 활성화되지 않은 회원입니다. 활성화 버튼을 눌러 로그인을 허용하세요.
+</div>
+{% endblock %}

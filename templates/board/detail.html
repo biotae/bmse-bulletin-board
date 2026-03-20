@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}{{ post.title }} - BMSE 교수 게시판{% endblock %}
+
+{% block content %}
+<!-- Back link -->
+<div class="mb-3">
+  <a href="{{ url_for('board_list') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>목록으로
+  </a>
+</div>
+
+<!-- Post card -->
+<div class="card shadow-sm border-0 mb-4">
+  <!-- Post header -->
+  <div class="card-header bg-white border-bottom py-3">
+    <h4 class="fw-bold mb-2">{{ post.title }}</h4>
+    <div class="d-flex flex-wrap gap-3 text-muted small">
+      <span><i class="bi bi-person me-1"></i>{{ post.author.username }}</span>
+      <span><i class="bi bi-calendar3 me-1"></i>{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+      {% if post.updated_at != post.created_at %}
+      <span class="text-secondary">
+        <i class="bi bi-pencil me-1"></i>수정: {{ post.updated_at.strftime('%Y-%m-%d %H:%M') }}
+      </span>
+      {% endif %}
+      <span><i class="bi bi-eye me-1"></i>조회 {{ post.view_count }}</span>
+    </div>
+  </div>
+
+  <!-- Post body -->
+  <div class="card-body py-4">
+    <div class="post-content">{{ post.content | nl2br }}</div>
+  </div>
+
+  <!-- Attachments -->
+  {% if attachments %}
+  <div class="card-footer bg-light border-top">
+    <p class="fw-semibold mb-2 small text-muted">
+      <i class="bi bi-paperclip me-1"></i>첨부파일 ({{ attachments | length }}개)
+    </p>
+    <ul class="list-unstyled mb-0">
+      {% for att in attachments %}
+      <li class="mb-1">
+        <a href="{{ url_for('download_file', filename=att.filename) }}"
+           class="text-decoration-none file-download-link">
+          <i class="bi bi-file-earmark-arrow-down me-1 text-primary"></i>
+          <span>{{ att.original_filename }}</span>
+          <span class="text-muted small ms-1">({{ att.size_display() }})</span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Action buttons (author or admin) -->
+{% if current_user.id == post.author_id or current_user.is_admin() %}
+<div class="d-flex gap-2 mb-4">
+  <a href="{{ url_for('board_edit', post_id=post.id) }}" class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-pencil me-1"></i>수정
+  </a>
+  <form method="POST" action="{{ url_for('board_delete', post_id=post.id) }}"
+        onsubmit="return confirm('정말 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.');">
+    <button type="submit" class="btn btn-outline-danger btn-sm">
+      <i class="bi bi-trash me-1"></i>삭제
+    </button>
+  </form>
+</div>
+{% endif %}
+
+<!-- Comments section -->
+<div class="card shadow-sm border-0" id="comments">
+  <div class="card-header bg-white border-bottom py-3">
+    <h6 class="fw-bold mb-0">
+      <i class="bi bi-chat-left-text me-1 text-primary"></i>
+      댓글 <span class="badge bg-primary ms-1">{{ comments | length }}</span>
+    </h6>
+  </div>
+
+  <div class="card-body p-0">
+    {% if comments %}
+    <ul class="list-group list-group-flush">
+      {% for comment in comments %}
+      <li class="list-group-item py-3">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="fw-semibold small">{{ comment.author.username }}</span>
+              <span class="text-muted small">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            <p class="mb-0 comment-content">{{ comment.content | nl2br }}</p>
+          </div>
+          {% if current_user.id == comment.author_id or current_user.is_admin() %}
+          <form method="POST"
+                action="{{ url_for('comment_delete', comment_id=comment.id) }}"
+                class="ms-2 flex-shrink-0"
+                onsubmit="return confirm('댓글을 삭제하시겠습니까?');">
+            <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="text-center py-4 text-muted small">
+      <i class="bi bi-chat-dots me-1"></i>아직 댓글이 없습니다. 첫 댓글을 남겨보세요.
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Comment form -->
+  <div class="card-footer bg-white border-top pt-3 pb-3">
+    <form method="POST" action="{{ url_for('comment_create', post_id=post.id) }}">
+      <div class="mb-2">
+        <textarea
+          name="content"
+          class="form-control"
+          rows="3"
+          placeholder="댓글을 입력하세요..."
+          required
+        ></textarea>
+      </div>
+      <div class="text-end">
+        <button type="submit" class="btn btn-primary btn-sm">
+          <i class="bi bi-send me-1"></i>댓글 등록
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // nl2br filter fallback is handled server-side via a custom filter
+</script>
+{% endblock %}
