@@ -2,6 +2,29 @@
    GIST BMSE 교수 게시판 - Custom Styles
    ============================================================ */
 
+/* Burgundy theme – override Bootstrap primary */
+:root {
+  --bs-primary:         #800020;
+  --bs-primary-rgb:     128, 0, 32;
+  --bs-link-color:      #800020;
+  --bs-link-color-rgb:  128, 0, 32;
+  --bs-link-hover-color:#5a0016;
+}
+
+.btn-primary {
+  --bs-btn-bg:                #800020;
+  --bs-btn-border-color:      #800020;
+  --bs-btn-hover-bg:          #5a0016;
+  --bs-btn-hover-border-color:#5a0016;
+  --bs-btn-active-bg:         #4a0012;
+  --bs-btn-active-border-color:#4a0012;
+}
+
+.bg-primary { background-color: #800020 !important; }
+.text-primary { color: #800020 !important; }
+.border-primary { border-color: #800020 !important; }
+.navbar-dark.bg-primary { background-color: #800020 !important; }
+
 /* Global */
 body {
   background-color: #f8f9fa;
@@ -50,7 +73,7 @@ main.container {
   font-size: 0.95rem;
 }
 .post-title-link:hover {
-  color: #0d6efd !important;
+  color: #800020 !important;
   text-decoration: underline !important;
 }
 
@@ -102,12 +125,12 @@ main.container {
    Pagination
    ============================================================ */
 .page-link {
-  color: #0d6efd;
+  color: #800020;
   border-radius: 0.4rem !important;
 }
 .page-item.active .page-link {
-  background-color: #0d6efd;
-  border-color: #0d6efd;
+  background-color: #800020;
+  border-color: #800020;
 }
 
 /* ============================================================
