@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: bmse-bulletin-board
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    plan: free
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CLOUDINARY_CLOUD_NAME
+        value: dxicjq7m5
+      - key: CLOUDINARY_API_KEY
+        value: 198682648745998
+      - key: CLOUDINARY_API_SECRET
+        value: fPDWwBObED8V6myV-IhzLfs2k6w
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bmse-db
+          property: connectionString
+
+databases:
+  - name: bmse-db
+    databaseName: bmse_board
+    plan: free
