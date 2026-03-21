@@ -134,6 +134,20 @@ def delete_uploaded_file(att):
 
 def init_db():
     db.create_all()
+    # Add nickname column if it doesn't exist (migration for existing DBs)
+    try:
+        db.session.execute(db.text('ALTER TABLE users ADD COLUMN nickname VARCHAR(80)'))
+        db.session.commit()
+        print('[init] Added nickname column to users table')
+    except Exception:
+        db.session.rollback()  # Column already exists, ignore
+    # Add file_url column to attachments if missing
+    try:
+        db.session.execute(db.text('ALTER TABLE attachments ADD COLUMN file_url VARCHAR(1024)'))
+        db.session.commit()
+        print('[init] Added file_url column to attachments table')
+    except Exception:
+        db.session.rollback()
     if User.query.count() == 0:
         admin = User(
             username='admin',
