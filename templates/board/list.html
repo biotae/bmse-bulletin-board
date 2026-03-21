@@ -49,14 +49,14 @@
               {% endif %}
               <!-- 모바일 서브텍스트 -->
               <div class="d-md-none text-muted mt-1 post-meta-mobile">
-                <span>{{ post.author.username }}</span>
+                <span>{{ post.author.display_name }}</span>
                 <span class="mx-1">·</span>
                 <span>{{ post.created_at.strftime('%m-%d') }}</span>
                 <span class="mx-1">·</span>
                 <span>조회 {{ post.view_count }}</span>
               </div>
             </td>
-            <td class="text-center small d-none d-md-table-cell">{{ post.author.username }}</td>
+            <td class="text-center small d-none d-md-table-cell">{{ post.author.display_name }}</td>
             <td class="text-center small text-muted d-none d-md-table-cell">
               {{ post.created_at.strftime('%Y-%m-%d') }}
             </td>

@@ -500,6 +500,27 @@ def download_file(filename):
 
 
 # ---------------------------------------------------------------------------
+# Profile route
+# ---------------------------------------------------------------------------
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    if request.method == 'POST':
+        nickname = request.form.get('nickname', '').strip()
+        if nickname and User.query.filter(
+            User.nickname == nickname, User.id != current_user.id
+        ).first():
+            flash('이미 사용 중인 닉네임입니다.', 'danger')
+            return render_template('auth/profile.html')
+        current_user.nickname = nickname if nickname else None
+        db.session.commit()
+        flash('닉네임이 저장되었습니다.', 'success')
+        return redirect(url_for('profile'))
+    return render_template('auth/profile.html')
+
+
+# ---------------------------------------------------------------------------
 # Admin routes
 # ---------------------------------------------------------------------------
 
@@ -674,7 +695,7 @@ def api_posts_list(current_api_user):
         posts_data.append({
             'id': post.id,
             'title': post.title,
-            'author': post.author.username,
+            'author': post.author.display_name,
             'created_at': post.created_at.isoformat(),
             'view_count': post.view_count,
             'has_attachments': post.attachments.count() > 0,
@@ -707,7 +728,7 @@ def api_post_detail(current_api_user, post_id):
     comments = [{
         'id': c.id,
         'content': c.content,
-        'author': c.author.username,
+        'author': c.author.display_name,
         'created_at': c.created_at.isoformat(),
     } for c in post.comments.order_by(Comment.created_at.asc()).all()]
 
@@ -715,7 +736,7 @@ def api_post_detail(current_api_user, post_id):
         'id': post.id,
         'title': post.title,
         'content': post.content,
-        'author': post.author.username,
+        'author': post.author.display_name,
         'created_at': post.created_at.isoformat(),
         'updated_at': post.updated_at.isoformat(),
         'view_count': post.view_count,

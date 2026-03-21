@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}내 정보 - GIST BMSE 교수 게시판{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <h5 class="fw-bold mb-4">
+          <i class="bi bi-person-gear text-primary me-2"></i>내 정보
+        </h5>
+
+        <!-- 기본 정보 -->
+        <div class="mb-4 p-3 bg-light rounded">
+          <div class="mb-2">
+            <span class="text-muted small">아이디</span>
+            <div class="fw-semibold">{{ current_user.username }}</div>
+          </div>
+          <div>
+            <span class="text-muted small">이메일</span>
+            <div class="fw-semibold">{{ current_user.email }}</div>
+          </div>
+        </div>
+
+        <!-- 닉네임 설정 -->
+        <form method="POST">
+          <div class="mb-3">
+            <label for="nickname" class="form-label fw-semibold">닉네임</label>
+            <input type="text" class="form-control" id="nickname" name="nickname"
+                   placeholder="닉네임을 입력하세요 (미입력 시 아이디로 표시)"
+                   value="{{ current_user.nickname or '' }}"
+                   maxlength="80">
+            <div class="form-text">게시글·댓글에 표시되는 이름입니다.</div>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary">저장</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

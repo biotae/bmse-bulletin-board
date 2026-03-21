@@ -29,6 +29,9 @@
           <tr {% if not member.is_active %}class="table-warning"{% endif %}>
             <td>
               <span class="fw-semibold">{{ member.username }}</span>
+              {% if member.nickname %}
+              <span class="text-muted small ms-1">({{ member.nickname }})</span>
+              {% endif %}
               {% if member.id == current_user.id %}
               <span class="badge bg-light text-secondary border ms-1 small">나</span>
               {% endif %}
