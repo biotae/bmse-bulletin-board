@@ -20,10 +20,10 @@
           <tr>
             <th class="text-center col-num">번호</th>
             <th>제목</th>
-            <th class="text-center col-author">작성자</th>
-            <th class="text-center col-date">날짜</th>
-            <th class="text-center col-views">조회수</th>
-            <th class="text-center col-attach">첨부</th>
+            <th class="text-center col-author d-none d-md-table-cell">작성자</th>
+            <th class="text-center col-date d-none d-md-table-cell">날짜</th>
+            <th class="text-center col-views d-none d-md-table-cell">조회수</th>
+            <th class="text-center col-attach d-none d-md-table-cell">첨부</th>
           </tr>
         </thead>
         <tbody>
@@ -32,6 +32,8 @@
           {% set current_page = pagination.page %}
           {% for post in posts %}
           {% set row_num = total - (current_page - 1) * per_page - loop.index0 %}
+          {% set comment_count = post.comments.count() %}
+          {% set attach_count = post.attachments.count() %}
           <tr>
             <td class="text-center text-muted small">{{ row_num }}</td>
             <td>
@@ -39,19 +41,29 @@
                  class="text-decoration-none text-dark fw-semibold post-title-link">
                 {{ post.title }}
               </a>
-              {% set comment_count = post.comments.count() %}
               {% if comment_count > 0 %}
               <span class="badge bg-secondary ms-1 small">{{ comment_count }}</span>
               {% endif %}
+              {% if attach_count > 0 %}
+              <i class="bi bi-paperclip text-secondary ms-1 d-md-none" style="font-size:0.8rem;"></i>
+              {% endif %}
+              <!-- 모바일 서브텍스트 -->
+              <div class="d-md-none text-muted mt-1 post-meta-mobile">
+                <span>{{ post.author.username }}</span>
+                <span class="mx-1">·</span>
+                <span>{{ post.created_at.strftime('%m-%d') }}</span>
+                <span class="mx-1">·</span>
+                <span>조회 {{ post.view_count }}</span>
+              </div>
             </td>
-            <td class="text-center small">{{ post.author.username }}</td>
-            <td class="text-center small text-muted">
+            <td class="text-center small d-none d-md-table-cell">{{ post.author.username }}</td>
+            <td class="text-center small text-muted d-none d-md-table-cell">
               {{ post.created_at.strftime('%Y-%m-%d') }}
             </td>
-            <td class="text-center small text-muted">{{ post.view_count }}</td>
-            <td class="text-center">
-              {% if post.attachments.count() > 0 %}
-              <i class="bi bi-paperclip text-secondary" title="{{ post.attachments.count() }}개 파일 첨부"></i>
+            <td class="text-center small text-muted d-none d-md-table-cell">{{ post.view_count }}</td>
+            <td class="text-center d-none d-md-table-cell">
+              {% if attach_count > 0 %}
+              <i class="bi bi-paperclip text-secondary" title="{{ attach_count }}개 파일 첨부"></i>
               {% endif %}
             </td>
           </tr>
