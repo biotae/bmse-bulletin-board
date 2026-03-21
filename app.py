@@ -148,7 +148,19 @@ def init_db():
 
 
 with app.app_context():
-    init_db()
+    try:
+        init_db()
+    except Exception as e:
+        print(f'[WARNING] DB init failed: {e}')
+        print(f'[WARNING] DATABASE_URL={app.config.get("SQLALCHEMY_DATABASE_URI", "not set")}')
+
+@app.route('/healthz')
+def healthz():
+    try:
+        db.session.execute(db.text('SELECT 1'))
+        return 'OK', 200
+    except Exception as e:
+        return f'DB error: {e}', 500
 
 
 # ---------------------------------------------------------------------------
