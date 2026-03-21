@@ -522,16 +522,18 @@ def download_file(filename):
 def profile():
     if request.method == 'POST':
         nickname = request.form.get('nickname', '').strip()
+        back = request.form.get('back') or url_for('board_list')
         if nickname and User.query.filter(
             User.nickname == nickname, User.id != current_user.id
         ).first():
             flash('이미 사용 중인 닉네임입니다.', 'danger')
-            return render_template('auth/profile.html')
+            return render_template('auth/profile.html', back=back)
         current_user.nickname = nickname if nickname else None
         db.session.commit()
         flash('닉네임이 저장되었습니다.', 'success')
-        return redirect(url_for('profile'))
-    return render_template('auth/profile.html')
+        return redirect(back)
+    back = request.referrer or url_for('board_list')
+    return render_template('auth/profile.html', back=back)
 
 
 # ---------------------------------------------------------------------------
