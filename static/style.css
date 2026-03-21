@@ -81,9 +81,8 @@ main.container {
    Post detail
    ============================================================ */
 .post-content {
-  line-height: 1.9;
+  line-height: 1.7;
   font-size: 0.95rem;
-  white-space: pre-wrap;
   word-break: break-word;
 }
 

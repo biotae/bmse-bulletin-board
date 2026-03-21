@@ -55,7 +55,7 @@ def nl2br_filter(value):
     if value is None:
         return ''
     escaped = markupsafe.escape(value)
-    return markupsafe.Markup(escaped.replace('\n', markupsafe.Markup('<br>\n')))
+    return markupsafe.Markup(escaped.replace('\n', markupsafe.Markup('<br>')))
 
 
 @app.context_processor
