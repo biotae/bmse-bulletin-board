@@ -18,7 +18,8 @@ from flask_login import (
 from werkzeug.utils import secure_filename
 
 from config import Config
-from models import db, User, Post, Attachment, Comment
+from pywebpush import webpush, WebPushException
+from models import db, User, Post, Attachment, Comment, PushSubscription
 
 # ---------------------------------------------------------------------------
 # App setup
@@ -148,6 +149,23 @@ def init_db():
         print('[init] Added file_url column to attachments table')
     except Exception:
         db.session.rollback()
+    # Create push_subscriptions table if missing
+    try:
+        db.session.execute(db.text('''
+            CREATE TABLE IF NOT EXISTS push_subscriptions (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                endpoint TEXT NOT NULL UNIQUE,
+                p256dh TEXT NOT NULL,
+                auth TEXT NOT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            )
+        '''))
+        db.session.commit()
+        print('[init] push_subscriptions table ready')
+    except Exception as e:
+        db.session.rollback()
+        print(f'[init] push_subscriptions table error: {e}')
     if User.query.count() == 0:
         admin = User(
             username='admin',
@@ -168,6 +186,31 @@ with app.app_context():
         print(f'[WARNING] DB init failed: {e}')
         print(f'[WARNING] DATABASE_URL={app.config.get("SQLALCHEMY_DATABASE_URI", "not set")}')
 
+def send_push_to_all(title, body, url):
+    """모든 구독자에게 웹 푸시 발송."""
+    vapid_private_key = app.config.get('VAPID_PRIVATE_KEY')
+    vapid_claims_email = app.config.get('VAPID_CLAIMS_EMAIL', 'admin@bmse.ac.kr')
+    if not vapid_private_key:
+        return
+    subscriptions = PushSubscription.query.all()
+    for sub in subscriptions:
+        try:
+            webpush(
+                subscription_info={
+                    'endpoint': sub.endpoint,
+                    'keys': {'p256dh': sub.p256dh, 'auth': sub.auth},
+                },
+                data=__import__('json').dumps({'title': title, 'body': body, 'url': url}),
+                vapid_private_key=vapid_private_key,
+                vapid_claims={'sub': f'mailto:{vapid_claims_email}'},
+            )
+        except WebPushException as e:
+            # 만료된 구독은 삭제
+            if e.response and e.response.status_code in (404, 410):
+                db.session.delete(sub)
+    db.session.commit()
+
+
 @app.route('/healthz')
 def healthz():
     try:
@@ -175,6 +218,46 @@ def healthz():
         return 'OK', 200
     except Exception as e:
         return f'DB error: {e}', 500
+
+
+# ---------------------------------------------------------------------------
+# Push notification routes
+# ---------------------------------------------------------------------------
+
+@app.route('/push/subscribe', methods=['POST'])
+@login_required
+def push_subscribe():
+    data = request.get_json(silent=True) or {}
+    endpoint = data.get('endpoint')
+    keys = data.get('keys', {})
+    p256dh = keys.get('p256dh')
+    auth = keys.get('auth')
+    if not endpoint or not p256dh or not auth:
+        return jsonify({'error': 'Invalid subscription'}), 400
+    existing = PushSubscription.query.filter_by(endpoint=endpoint).first()
+    if not existing:
+        sub = PushSubscription(
+            user_id=current_user.id,
+            endpoint=endpoint,
+            p256dh=p256dh,
+            auth=auth,
+        )
+        db.session.add(sub)
+        db.session.commit()
+    return jsonify({'ok': True})
+
+
+@app.route('/push/unsubscribe', methods=['POST'])
+@login_required
+def push_unsubscribe():
+    data = request.get_json(silent=True) or {}
+    endpoint = data.get('endpoint')
+    if endpoint:
+        sub = PushSubscription.query.filter_by(endpoint=endpoint).first()
+        if sub:
+            db.session.delete(sub)
+            db.session.commit()
+    return jsonify({'ok': True})
 
 
 # ---------------------------------------------------------------------------
@@ -339,6 +422,12 @@ def board_create():
         flash(f'게시글이 등록되었습니다. (허용되지 않는 파일 {skipped}개는 업로드되지 않았습니다.)', 'warning')
     else:
         flash('게시글이 등록되었습니다.', 'success')
+
+    send_push_to_all(
+        title='새 게시글',
+        body=f'{current_user.display_name}: {title}',
+        url=url_for('board_detail', post_id=post.id, _external=True),
+    )
     return redirect(url_for('board_detail', post_id=post.id))
 
 

@@ -6,3 +6,4 @@ PyJWT==2.12.1
 cloudinary==1.44.1
 psycopg2-binary==2.9.11
 gunicorn==25.1.0
+pywebpush==2.3.0
