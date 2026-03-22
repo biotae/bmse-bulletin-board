@@ -425,7 +425,7 @@ def board_create():
 
     send_push_to_all(
         title='[BMSE 교수 게시판] 새 게시글 알림',
-        body=f'{current_user.display_name}: {title}',
+        body=f'작성자: {current_user.display_name}\n제목: {title}',
         url=url_for('board_detail', post_id=post.id, _external=True),
     )
     return redirect(url_for('board_detail', post_id=post.id))
