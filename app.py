@@ -19,7 +19,7 @@ from werkzeug.utils import secure_filename
 
 from config import Config
 from pywebpush import webpush, WebPushException
-from models import db, User, Post, Attachment, Comment, PushSubscription
+from models import db, User, Post, Attachment, Comment, PushSubscription, Notice
 
 # ---------------------------------------------------------------------------
 # App setup
@@ -62,6 +62,16 @@ def nl2br_filter(value):
 @app.context_processor
 def inject_now():
     return {'now': datetime.utcnow()}
+
+
+@app.context_processor
+def inject_active_notices():
+    from flask_login import current_user
+    if current_user.is_authenticated:
+        notices = Notice.query.filter_by(is_active=True).order_by(Notice.created_at.desc()).all()
+    else:
+        notices = []
+    return {'active_notices': notices}
 
 
 @login_manager.user_loader
@@ -166,6 +176,24 @@ def init_db():
     except Exception as e:
         db.session.rollback()
         print(f'[init] push_subscriptions table error: {e}')
+    # Create notices table if missing
+    try:
+        db.session.execute(db.text('''
+            CREATE TABLE IF NOT EXISTS notices (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR(200) NOT NULL,
+                content TEXT NOT NULL,
+                author_id INTEGER NOT NULL REFERENCES users(id),
+                is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            )
+        '''))
+        db.session.commit()
+        print('[init] notices table ready')
+    except Exception as e:
+        db.session.rollback()
+        print(f'[init] notices table error: {e}')
     if User.query.count() == 0:
         admin = User(
             username='admin',
@@ -680,6 +708,91 @@ def admin_toggle_role(user_id):
 
     flash(f'{user.username}의 역할이 {user.role}(으)로 변경되었습니다.', 'success')
     return redirect(url_for('admin_members'))
+
+
+# ---------------------------------------------------------------------------
+# Admin notice routes
+# ---------------------------------------------------------------------------
+
+@app.route('/admin/notices')
+@login_required
+@admin_required
+def admin_notices():
+    notices = Notice.query.order_by(Notice.created_at.desc()).all()
+    return render_template('admin/notices.html', notices=notices)
+
+
+@app.route('/admin/notices/new', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_notice_new():
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        content = request.form.get('content', '').strip()
+        if not title:
+            flash('제목을 입력해주세요.', 'danger')
+            return render_template('admin/notice_form.html', notice=None)
+        if not content:
+            flash('내용을 입력해주세요.', 'danger')
+            return render_template('admin/notice_form.html', notice=None)
+        notice = Notice(title=title, content=content, author_id=current_user.id)
+        db.session.add(notice)
+        db.session.commit()
+        flash('공지사항이 등록되었습니다.', 'success')
+        return redirect(url_for('admin_notices'))
+    return render_template('admin/notice_form.html', notice=None)
+
+
+@app.route('/admin/notices/<int:notice_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_notice_edit(notice_id):
+    notice = db.session.get(Notice, notice_id)
+    if notice is None:
+        abort(404)
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        content = request.form.get('content', '').strip()
+        if not title:
+            flash('제목을 입력해주세요.', 'danger')
+            return render_template('admin/notice_form.html', notice=notice)
+        if not content:
+            flash('내용을 입력해주세요.', 'danger')
+            return render_template('admin/notice_form.html', notice=notice)
+        notice.title = title
+        notice.content = content
+        notice.updated_at = datetime.utcnow()
+        db.session.commit()
+        flash('공지사항이 수정되었습니다.', 'success')
+        return redirect(url_for('admin_notices'))
+    return render_template('admin/notice_form.html', notice=notice)
+
+
+@app.route('/admin/notices/<int:notice_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def admin_notice_delete(notice_id):
+    notice = db.session.get(Notice, notice_id)
+    if notice is None:
+        abort(404)
+    db.session.delete(notice)
+    db.session.commit()
+    flash('공지사항이 삭제되었습니다.', 'success')
+    return redirect(url_for('admin_notices'))
+
+
+@app.route('/admin/notices/<int:notice_id>/toggle', methods=['POST'])
+@login_required
+@admin_required
+def admin_notice_toggle(notice_id):
+    notice = db.session.get(Notice, notice_id)
+    if notice is None:
+        abort(404)
+    notice.is_active = not notice.is_active
+    db.session.commit()
+    status = '활성화' if notice.is_active else '비활성화'
+    flash(f'공지사항이 {status}되었습니다.', 'success')
+    return redirect(url_for('admin_notices'))
 
 
 # ---------------------------------------------------------------------------

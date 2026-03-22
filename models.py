@@ -97,6 +97,23 @@ class PushSubscription(db.Model):
         return f'<PushSubscription user_id={self.user_id}>'
 
 
+class Notice(db.Model):
+    __tablename__ = 'notices'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    author = db.relationship('User', backref='notices')
+
+    def __repr__(self):
+        return f'<Notice {self.title}>'
+
+
 class Comment(db.Model):
     __tablename__ = 'comments'
 
