@@ -129,71 +129,49 @@
     {% endif %}
   {% endwith %}
 
-  {% block content %}{% endblock %}
-</main>
-
-<!-- ===== Notice Modal ===== -->
-{% if current_user.is_authenticated and active_notices %}
-<div class="modal fade" id="noticeModal" tabindex="-1" aria-labelledby="noticeModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="noticeModalLabel">
-          <i class="bi bi-megaphone me-2"></i>공지사항
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+  <!-- ===== Notice Box ===== -->
+  {% if current_user.is_authenticated and active_notices %}
+  <div id="notice-box" class="mb-3" style="display:none;">
+    <div class="card border-warning shadow-sm">
+      <div class="card-header bg-warning bg-opacity-25 d-flex justify-content-between align-items-center py-2">
+        <span class="fw-semibold text-dark">
+          <i class="bi bi-megaphone-fill text-warning me-1"></i>공지사항
+        </span>
+        <button type="button" class="btn-close" id="notice-close-btn" aria-label="닫기"></button>
       </div>
-      <div class="modal-body p-0">
-        <div id="noticeAccordion" class="accordion accordion-flush">
-          {% for notice in active_notices %}
-          <div class="accordion-item">
-            <h2 class="accordion-header">
-              <button class="accordion-button {% if not loop.first %}collapsed{% endif %} fw-semibold"
-                      type="button" data-bs-toggle="collapse"
-                      data-bs-target="#noticeItem{{ notice.id }}"
-                      aria-expanded="{{ 'true' if loop.first else 'false' }}">
-                {{ notice.title }}
-                <span class="text-muted small ms-2 fw-normal">{{ notice.created_at.strftime('%Y-%m-%d') }}</span>
-              </button>
-            </h2>
-            <div id="noticeItem{{ notice.id }}"
-                 class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
-                 data-bs-parent="#noticeAccordion">
-              <div class="accordion-body text-break" style="white-space: pre-wrap;">{{ notice.content }}</div>
-            </div>
+      <div class="card-body p-0">
+        {% for notice in active_notices %}
+        <div class="px-3 py-2 {% if not loop.last %}border-bottom{% endif %}">
+          <div class="fw-semibold small">{{ notice.title }}
+            <span class="text-muted fw-normal ms-1">{{ notice.created_at.strftime('%Y-%m-%d') }}</span>
           </div>
-          {% endfor %}
+          <div class="text-muted mt-1" style="white-space:pre-wrap; font-size:0.875rem;">{{ notice.content }}</div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="noticeConfirmBtn">
-          확인
-        </button>
+        {% endfor %}
       </div>
     </div>
   </div>
-</div>
-<script>
-(function() {
-  var noticeIds = {{ active_notices | map(attribute='id') | list | tojson }};
-  var storageKey = 'seen_notices';
-  var seen = JSON.parse(localStorage.getItem(storageKey) || '[]');
-  var hasNew = noticeIds.some(function(id) { return seen.indexOf(id) === -1; });
-  if (hasNew) {
-    var modal = new bootstrap.Modal(document.getElementById('noticeModal'));
-    modal.show();
-    document.getElementById('noticeConfirmBtn').addEventListener('click', function() {
+  <script>
+  (function() {
+    var noticeIds = {{ active_notices | map(attribute='id') | list | tojson }};
+    var storageKey = 'seen_notices';
+    var seen = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    var hasNew = noticeIds.some(function(id) { return seen.indexOf(id) === -1; });
+    if (hasNew) {
+      document.getElementById('notice-box').style.display = '';
+    }
+    function dismiss() {
+      document.getElementById('notice-box').style.display = 'none';
       noticeIds.forEach(function(id) { if (seen.indexOf(id) === -1) seen.push(id); });
       localStorage.setItem(storageKey, JSON.stringify(seen));
-    });
-    document.getElementById('noticeModal').addEventListener('hidden.bs.modal', function() {
-      noticeIds.forEach(function(id) { if (seen.indexOf(id) === -1) seen.push(id); });
-      localStorage.setItem(storageKey, JSON.stringify(seen));
-    });
-  }
-})();
-</script>
-{% endif %}
+    }
+    document.getElementById('notice-close-btn').addEventListener('click', dismiss);
+  })();
+  </script>
+  {% endif %}
+
+  {% block content %}{% endblock %}
+</main>
 
 <!-- ===== Footer ===== -->
 <footer class="footer mt-auto py-3 bg-light border-top">
