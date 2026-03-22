@@ -298,7 +298,7 @@ def login():
             return render_template('auth/login.html')
 
         login_user(user, remember=True)
-        flash(f'환영합니다, {user.username}님!', 'success')
+        flash(f'환영합니다, {user.display_name}님!', 'success')
         next_page = request.args.get('next')
         return redirect(next_page or url_for('board_list'))
 
