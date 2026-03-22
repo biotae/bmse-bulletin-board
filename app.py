@@ -211,6 +211,14 @@ def send_push_to_all(title, body, url):
     db.session.commit()
 
 
+@app.route('/sw.js')
+def service_worker():
+    response = send_from_directory(app.static_folder, 'sw.js')
+    response.headers['Content-Type'] = 'application/javascript'
+    response.headers['Service-Worker-Allowed'] = '/'
+    return response
+
+
 @app.route('/healthz')
 def healthz():
     try:

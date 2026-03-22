@@ -70,7 +70,7 @@ async function showPushBanner() {
 }
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/static/sw.js').then(() => {
+  navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(() => {
     if (document.body.dataset.loggedIn === 'true') {
       showPushBanner();
     }
