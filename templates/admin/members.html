@@ -71,17 +71,17 @@
                       class="d-inline">
                   {% if member.is_active %}
                   <button type="submit"
-                          class="btn btn-outline-warning btn-sm"
+                          class="btn btn-outline-warning btn-sm px-2"
                           onclick="return confirm('{{ member.username }} 계정을 비활성화하시겠습니까?')"
                           title="비활성화">
-                    <i class="bi bi-pause-circle me-1"></i>비활성화
+                    <i class="bi bi-pause-circle"></i>
                   </button>
                   {% else %}
                   <button type="submit"
-                          class="btn btn-outline-success btn-sm"
+                          class="btn btn-outline-success btn-sm px-2"
                           onclick="return confirm('{{ member.username }} 계정을 활성화하시겠습니까?')"
                           title="활성화">
-                    <i class="bi bi-play-circle me-1"></i>활성화
+                    <i class="bi bi-play-circle"></i>
                   </button>
                   {% endif %}
                 </form>
@@ -92,17 +92,17 @@
                       class="d-inline">
                   {% if member.role == 'admin' %}
                   <button type="submit"
-                          class="btn btn-outline-secondary btn-sm"
+                          class="btn btn-outline-secondary btn-sm px-2"
                           onclick="return confirm('{{ member.username }}의 역할을 일반회원으로 변경하시겠습니까?')"
                           title="일반회원으로 변경">
-                    <i class="bi bi-arrow-down-circle me-1"></i>일반회원으로
+                    <i class="bi bi-arrow-down-circle"></i>
                   </button>
                   {% else %}
                   <button type="submit"
-                          class="btn btn-outline-primary btn-sm"
+                          class="btn btn-outline-primary btn-sm px-2"
                           onclick="return confirm('{{ member.username }}의 역할을 관리자로 변경하시겠습니까?')"
                           title="관리자로 변경">
-                    <i class="bi bi-arrow-up-circle me-1"></i>관리자로
+                    <i class="bi bi-arrow-up-circle"></i>
                   </button>
                   {% endif %}
                 </form>
