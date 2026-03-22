@@ -424,7 +424,7 @@ def board_create():
         flash('게시글이 등록되었습니다.', 'success')
 
     send_push_to_all(
-        title='새 게시글',
+        title='[BMSE 교수 게시판] 새 게시글 알림',
         body=f'{current_user.display_name}: {title}',
         url=url_for('board_detail', post_id=post.id, _external=True),
     )
