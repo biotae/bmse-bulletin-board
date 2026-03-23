@@ -22,13 +22,13 @@
           </div>
         </div>
 
-        <!-- 닉네임 설정 -->
+        <!-- 실명 설정 -->
         <form method="POST">
           <input type="hidden" name="back" value="{{ back }}">
           <div class="mb-3">
-            <label for="nickname" class="form-label fw-semibold">닉네임</label>
+            <label for="nickname" class="form-label fw-semibold">실명</label>
             <input type="text" class="form-control" id="nickname" name="nickname"
-                   placeholder="닉네임을 입력하세요 (미입력 시 아이디로 표시)"
+                   placeholder="실명을 입력하세요 (미입력 시 아이디로 표시)"
                    value="{{ current_user.nickname or '' }}"
                    maxlength="80">
             <div class="form-text">게시글·댓글에 표시되는 이름입니다.</div>
