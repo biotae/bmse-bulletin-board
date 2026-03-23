@@ -59,6 +59,17 @@ def nl2br_filter(value):
     return markupsafe.Markup(escaped.replace('\n', markupsafe.Markup('<br>')))
 
 
+@app.template_filter('render_content')
+def render_content_filter(value):
+    """Render post content: HTML (from rich editor) or plain text (legacy)."""
+    if value is None:
+        return ''
+    if '<' in value and '>' in value:
+        return markupsafe.Markup(value)
+    escaped = markupsafe.escape(value)
+    return markupsafe.Markup(escaped.replace('\n', markupsafe.Markup('<br>')))
+
+
 @app.context_processor
 def inject_now():
     return {'now': datetime.utcnow()}

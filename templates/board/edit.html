@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
 {% block title %}글 수정 - GIST BMSE 교수 게시판{% endblock %}
 
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4 class="fw-bold mb-0">
@@ -31,15 +35,9 @@
 
       <!-- Content -->
       <div class="mb-3">
-        <label for="content" class="form-label fw-semibold">내용 <span class="text-danger">*</span></label>
-        <textarea
-          id="content"
-          name="content"
-          class="form-control"
-          rows="15"
-          placeholder="내용을 입력하세요"
-          required
-        >{{ request.form.get('content', post.content) }}</textarea>
+        <label class="form-label fw-semibold">내용 <span class="text-danger">*</span></label>
+        <div id="editor" style="min-height:300px;"></div>
+        <input type="hidden" id="content" name="content">
       </div>
 
       <!-- Existing attachments -->
@@ -101,4 +99,41 @@
     </form>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script>
+  var quill = new Quill('#editor', {
+    theme: 'snow',
+    placeholder: '내용을 입력하세요',
+    modules: {
+      toolbar: [
+        ['bold', 'italic', 'underline'],
+        [{ 'color': [] }],
+        ['clean']
+      ]
+    }
+  });
+
+  // 기존 내용 불러오기 (HTML 또는 plain text 모두 처리)
+  var existing = {{ (request.form.get('content', post.content) or '') | tojson }};
+  if (existing) {
+    if (existing.includes('<') && existing.includes('>')) {
+      quill.clipboard.dangerouslyPasteHTML(existing);
+    } else {
+      quill.setText(existing);
+    }
+  }
+
+  document.querySelector('form').addEventListener('submit', function(e) {
+    var content = quill.root.innerHTML.trim();
+    if (content === '<p><br></p>' || content === '') {
+      e.preventDefault();
+      alert('내용을 입력해주세요.');
+      return;
+    }
+    document.getElementById('content').value = content;
+  });
+</script>
 {% endblock %}
