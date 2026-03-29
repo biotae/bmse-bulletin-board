@@ -1,5 +1,8 @@
 import os
 import uuid
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
 from functools import wraps
 
@@ -350,6 +353,100 @@ def login():
         return redirect(next_page or url_for('board_list'))
 
     return render_template('auth/login.html')
+
+
+# ---------------------------------------------------------------------------
+# Password reset
+# ---------------------------------------------------------------------------
+
+def _send_reset_email(user, token):
+    """Send password-reset email via SMTP."""
+    reset_url = url_for('reset_password', token=token, _external=True)
+    subject = '[GIST BMSE 게시판] 비밀번호 재설정'
+    html_body = f'''
+    <p>{user.display_name} 님, 안녕하세요.</p>
+    <p>비밀번호 재설정을 요청하셨습니다. 아래 링크를 클릭하여 새 비밀번호를 설정하세요.</p>
+    <p><a href="{reset_url}" style="display:inline-block;padding:10px 20px;background:#0d6efd;color:#fff;border-radius:5px;text-decoration:none;">비밀번호 재설정</a></p>
+    <p>이 링크는 <strong>30분간</strong> 유효합니다.</p>
+    <p>본인이 요청하지 않았다면 이 이메일을 무시하세요.</p>
+    <hr><small>GIST BMSE 교수 게시판</small>
+    '''
+
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = app.config['MAIL_DEFAULT_SENDER']
+    msg['To'] = user.email
+    msg.attach(MIMEText(html_body, 'html'))
+
+    server = smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT'])
+    try:
+        if app.config['MAIL_USE_TLS']:
+            server.starttls()
+        if app.config.get('MAIL_USERNAME'):
+            server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
+        server.sendmail(msg['From'], [user.email], msg.as_string())
+    finally:
+        server.quit()
+
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if current_user.is_authenticated:
+        return redirect(url_for('board_list'))
+
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        # Always show same message to prevent email enumeration
+        flash('해당 이메일로 가입된 계정이 있다면, 비밀번호 재설정 링크를 발송했습니다.', 'info')
+
+        user = User.query.filter_by(email=email).first()
+        if user:
+            token = jwt.encode(
+                {'reset': user.id, 'exp': datetime.utcnow() + timedelta(minutes=30)},
+                app.config['SECRET_KEY'],
+                algorithm='HS256',
+            )
+            try:
+                _send_reset_email(user, token)
+            except Exception as e:
+                app.logger.error(f'Password reset email failed: {e}')
+
+        return redirect(url_for('login'))
+
+    return render_template('auth/forgot_password.html')
+
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('board_list'))
+
+    try:
+        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        user = db.session.get(User, payload['reset'])
+        if user is None:
+            raise ValueError('user not found')
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, ValueError, KeyError):
+        flash('비밀번호 재설정 링크가 만료되었거나 유효하지 않습니다.', 'danger')
+        return redirect(url_for('forgot_password'))
+
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        confirm = request.form.get('confirm_password', '')
+
+        if not password:
+            flash('새 비밀번호를 입력해주세요.', 'danger')
+            return render_template('auth/reset_password.html', token=token)
+        if password != confirm:
+            flash('비밀번호가 일치하지 않습니다.', 'danger')
+            return render_template('auth/reset_password.html', token=token)
+
+        user.set_password(password)
+        db.session.commit()
+        flash('비밀번호가 성공적으로 변경되었습니다. 새 비밀번호로 로그인하세요.', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('auth/reset_password.html', token=token)
 
 
 @app.route('/register', methods=['GET', 'POST'])
