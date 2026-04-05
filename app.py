@@ -347,8 +347,9 @@ def login():
             flash('계정이 아직 활성화되지 않았습니다. 관리자에게 문의하세요.', 'warning')
             return render_template('auth/login.html')
 
-        login_user(user, remember=True)
-        flash(f'환영합니다, {user.display_name} 님! 오늘도 좋은 하루 되시길 바랍니다.', 'success')
+        remember = request.form.get('remember') == 'on'
+        login_user(user, remember=remember)
+        flash(f'환영합니다, {user.display_name} 교수님! 오늘도 좋은 하루 되시길 바랍니다.', 'success')
         next_page = request.args.get('next')
         return redirect(next_page or url_for('board_list'))
 
@@ -516,7 +517,19 @@ def board_list():
         .paginate(page=page, per_page=app.config['POSTS_PER_PAGE'], error_out=False)
     )
     posts = pagination.items
-    return render_template('board/list.html', posts=posts, pagination=pagination)
+
+    # 회원별 글 작성 / 댓글 작성 통계
+    users = User.query.filter_by(is_active=True).all()
+    stats = []
+    for u in users:
+        stats.append({
+            'name': u.display_name,
+            'posts': u.posts.count(),
+            'comments': u.comments.count(),
+        })
+    stats.sort(key=lambda x: x['name'])  # 가나다순
+
+    return render_template('board/list.html', posts=posts, pagination=pagination, stats=stats)
 
 
 @app.route('/board/new', methods=['GET'])
