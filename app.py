@@ -780,11 +780,17 @@ def upload_image():
 def download_file(filename):
     att = Attachment.query.filter_by(filename=filename).first_or_404()
     if att.file_url:
-        url = att.file_url
-        if 'cloudinary' in url:
-            name_part = att.original_filename.rsplit('.', 1)[0] if '.' in att.original_filename else att.original_filename
-            url = url.replace('/upload/', f'/upload/fl_attachment:{name_part}/')
-        return redirect(url)
+        import urllib.request, urllib.parse
+        resp = urllib.request.urlopen(att.file_url)
+        encoded_name = urllib.parse.quote(att.original_filename)
+        from flask import Response
+        return Response(
+            resp.read(),
+            headers={
+                'Content-Disposition': f"attachment; filename*=UTF-8''{encoded_name}",
+                'Content-Type': 'application/octet-stream',
+            },
+        )
     return send_from_directory(
         app.config['UPLOAD_FOLDER'],
         att.filename,
@@ -1269,11 +1275,17 @@ def api_comment_delete(current_api_user, comment_id):
 def api_download_file(current_api_user, filename):
     att = Attachment.query.filter_by(filename=filename).first_or_404()
     if att.file_url:
-        url = att.file_url
-        if 'cloudinary' in url:
-            name_part = att.original_filename.rsplit('.', 1)[0] if '.' in att.original_filename else att.original_filename
-            url = url.replace('/upload/', f'/upload/fl_attachment:{name_part}/')
-        return redirect(url)
+        import urllib.request, urllib.parse
+        resp = urllib.request.urlopen(att.file_url)
+        encoded_name = urllib.parse.quote(att.original_filename)
+        from flask import Response
+        return Response(
+            resp.read(),
+            headers={
+                'Content-Disposition': f"attachment; filename*=UTF-8''{encoded_name}",
+                'Content-Type': 'application/octet-stream',
+            },
+        )
     return send_from_directory(
         app.config['UPLOAD_FOLDER'],
         att.filename,
