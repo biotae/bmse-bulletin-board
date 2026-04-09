@@ -73,15 +73,57 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 <script>
+  function imageHandler() {
+    var input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.setAttribute('accept', 'image/*');
+    input.click();
+    input.onchange = function() {
+      uploadImage(input.files[0]);
+    };
+  }
+
+  function uploadImage(file) {
+    var fd = new FormData();
+    fd.append('image', file);
+    fetch('/upload/image', { method: 'POST', body: fd })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.url) {
+          var range = quill.getSelection(true);
+          quill.insertEmbed(range.index, 'image', data.url);
+          quill.setSelection(range.index + 1);
+        } else {
+          alert(data.error || '이미지 업로드 실패');
+        }
+      });
+  }
+
   var quill = new Quill('#editor', {
     theme: 'snow',
     placeholder: '내용을 입력하세요',
     modules: {
-      toolbar: [
-        ['bold', 'italic', 'underline'],
-        [{ 'color': [] }],
-        ['clean']
-      ]
+      toolbar: {
+        container: [
+          ['bold', 'italic', 'underline'],
+          [{ 'color': [] }],
+          ['image'],
+          ['clean']
+        ],
+        handlers: { image: imageHandler }
+      }
+    }
+  });
+
+  // 클립보드 이미지 붙여넣기
+  quill.root.addEventListener('paste', function(e) {
+    var items = (e.clipboardData || {}).items || [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        e.preventDefault();
+        uploadImage(items[i].getAsFile());
+        return;
+      }
     }
   });
 

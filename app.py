@@ -745,6 +745,33 @@ def comment_delete(comment_id):
 
 
 # ---------------------------------------------------------------------------
+# Image upload for editor
+# ---------------------------------------------------------------------------
+
+@app.route('/upload/image', methods=['POST'])
+@login_required
+def upload_image():
+    file = request.files.get('image')
+    if not file or file.filename == '':
+        return jsonify({'error': '파일이 없습니다.'}), 400
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    if ext not in ('jpg', 'jpeg', 'png', 'gif', 'webp'):
+        return jsonify({'error': '이미지 파일만 업로드 가능합니다.'}), 400
+    if app.config.get('CLOUDINARY_CLOUD_NAME'):
+        result = cloudinary.uploader.upload(
+            file.read(),
+            resource_type='image',
+            folder='bmse_board/images',
+        )
+        return jsonify({'url': result['secure_url']})
+    else:
+        stored_name = f'{uuid.uuid4().hex}.{ext}'
+        save_path = os.path.join(app.config['UPLOAD_FOLDER'], stored_name)
+        file.save(save_path)
+        return jsonify({'url': url_for('static', filename=f'uploads/{stored_name}')})
+
+
+# ---------------------------------------------------------------------------
 # File download
 # ---------------------------------------------------------------------------
 
@@ -753,7 +780,11 @@ def comment_delete(comment_id):
 def download_file(filename):
     att = Attachment.query.filter_by(filename=filename).first_or_404()
     if att.file_url:
-        return redirect(att.file_url)
+        url = att.file_url
+        if 'cloudinary' in url:
+            name_part = att.original_filename.rsplit('.', 1)[0] if '.' in att.original_filename else att.original_filename
+            url = url.replace('/upload/', f'/upload/fl_attachment:{name_part}/')
+        return redirect(url)
     return send_from_directory(
         app.config['UPLOAD_FOLDER'],
         att.filename,
@@ -1238,7 +1269,11 @@ def api_comment_delete(current_api_user, comment_id):
 def api_download_file(current_api_user, filename):
     att = Attachment.query.filter_by(filename=filename).first_or_404()
     if att.file_url:
-        return redirect(att.file_url)
+        url = att.file_url
+        if 'cloudinary' in url:
+            name_part = att.original_filename.rsplit('.', 1)[0] if '.' in att.original_filename else att.original_filename
+            url = url.replace('/upload/', f'/upload/fl_attachment:{name_part}/')
+        return redirect(url)
     return send_from_directory(
         app.config['UPLOAD_FOLDER'],
         att.filename,

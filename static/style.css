@@ -71,7 +71,7 @@ main.container {
 .board-table .col-attach{ width: 50px; }
 
 .post-title-link {
-  font-size: 0.95rem;
+  font-size: 1.05rem;
 }
 .post-title-link:hover {
   color: #db2416 !important;
@@ -82,9 +82,16 @@ main.container {
    Post detail
    ============================================================ */
 .post-content {
-  line-height: 1.7;
-  font-size: 0.95rem;
+  line-height: 1.8;
+  font-size: 1.05rem;
   word-break: break-word;
+}
+
+.post-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 0.5em 0;
 }
 
 .file-download-link {
@@ -101,7 +108,7 @@ main.container {
    Comments
    ============================================================ */
 .comment-content {
-  font-size: 0.9rem;
+  font-size: 1rem;
   line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
