@@ -517,8 +517,12 @@ def board_list():
         .paginate(page=page, per_page=app.config['POSTS_PER_PAGE'], error_out=False)
     )
     posts = pagination.items
+    return render_template('board/list.html', posts=posts, pagination=pagination)
 
-    # 회원별 글 작성 / 댓글 작성 통계
+
+@app.route('/board/stats')
+@login_required
+def board_stats():
     users = User.query.filter_by(is_active=True).all()
     stats = []
     for u in users:
@@ -528,8 +532,7 @@ def board_list():
             'comments': u.comments.count(),
         })
     stats.sort(key=lambda x: x['name'])  # 가나다순
-
-    return render_template('board/list.html', posts=posts, pagination=pagination, stats=stats)
+    return render_template('board/stats.html', stats=stats)
 
 
 @app.route('/board/new', methods=['GET'])

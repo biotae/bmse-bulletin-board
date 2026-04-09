@@ -1,28 +1,19 @@
 {% extends 'base.html' %}
 {% block title %}게시판 - GIST BMSE 교수 게시판{% endblock %}
 
-{% block head %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-{% endblock %}
-
 {% block content %}
-<!-- 활동 통계 그래프 -->
-{% if stats %}
-<div class="card shadow-sm border-0 mb-4">
-  <div class="card-body">
-    <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart-line text-primary me-2"></i>회원별 활동 통계</h6>
-    <canvas id="statsChart"></canvas>
-  </div>
-</div>
-{% endif %}
-
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4 class="fw-bold mb-0">
     <i class="bi bi-list-ul text-primary me-2"></i>게시판
   </h4>
-  <a href="{{ url_for('board_new') }}" class="btn btn-primary">
-    <i class="bi bi-pencil-square me-1"></i>글쓰기
-  </a>
+  <div>
+    <a href="{{ url_for('board_stats') }}" class="btn btn-outline-secondary btn-sm me-2">
+      <i class="bi bi-bar-chart-line me-1"></i>회원 활동
+    </a>
+    <a href="{{ url_for('board_new') }}" class="btn btn-primary">
+      <i class="bi bi-pencil-square me-1"></i>글쓰기
+    </a>
+  </div>
 </div>
 
 <div class="card shadow-sm border-0">
@@ -146,56 +137,3 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
-{% if stats %}
-<script>
-(function() {
-  const labels = {{ stats | map(attribute='name') | list | tojson }};
-  const postData = {{ stats | map(attribute='posts') | list | tojson }};
-  const commentData = {{ stats | map(attribute='comments') | list | tojson }};
-  const barThickness = 14;
-  const rowHeight = 36;
-  const chartHeight = Math.max(labels.length * rowHeight + 60, 150);
-
-  const canvas = document.getElementById('statsChart');
-  canvas.parentElement.style.height = chartHeight + 'px';
-  canvas.style.height = chartHeight + 'px';
-
-  new Chart(canvas, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: '글 작성',
-          data: postData,
-          backgroundColor: 'rgba(219, 36, 22, 0.75)',
-          barThickness: barThickness
-        },
-        {
-          label: '댓글 작성',
-          data: commentData,
-          backgroundColor: 'rgba(54, 162, 235, 0.75)',
-          barThickness: barThickness
-        }
-      ]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'top' }
-      },
-      scales: {
-        x: {
-          beginAtZero: true,
-          ticks: { stepSize: 1, precision: 0 }
-        }
-      }
-    }
-  });
-})();
-</script>
-{% endif %}
-{% endblock %}
